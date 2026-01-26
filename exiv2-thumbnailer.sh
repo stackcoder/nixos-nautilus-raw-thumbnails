@@ -41,6 +41,7 @@ fi
 # WARN: Removing -strip could cause thumbnail generation loop
 magick "$preview" \
   -auto-orient \
+  -fuzz 5% -trim +repage \
   -thumbnail "${size}x${size}>" \
   -strip \
   "png:$out"
