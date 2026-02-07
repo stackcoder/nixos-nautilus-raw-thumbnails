@@ -44,7 +44,11 @@ if [[ ! -f "$preview" ]]; then
   tfuzz=0
 fi
 
-if [[ ! -f "$preview" ]]; then
+if [[ -f "$preview" ]]; then
+  # keep orientation
+  val=$(exiv2 -g "Exif.Thumbnail.Orientation" -Pv "$src" || true)
+  [[ -n "$val" ]] && exiv2 -M "set Exif.Image.Orientation ${val}" "$preview"
+else
   echo "WARN: No embedded thumbnail found in '$src'" >&2
   # slow attempt: try to directly read source file
   preview="$src"
