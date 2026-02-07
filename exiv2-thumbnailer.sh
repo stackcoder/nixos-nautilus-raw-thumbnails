@@ -9,6 +9,11 @@ set -euo pipefail
 #  /tmp/gnome-desktop-thumbnailer.png
 #  256
 
+# Debug using:
+# G_MESSAGES_DEBUG=GnomeDesktop nautilus
+# Refresh issues:
+# G_MESSAGES_DEBUG=all nautilus
+
 src="${1:-}"
 out="${2:-}"
 size="${3:-256}"
@@ -31,17 +36,25 @@ exiv2 -l "$tmpdir" --extract p1 "$src"
 
 name="$(basename "$src")"
 preview="${tmpdir}/${name%.*}-preview1.jpg"
+tfuzz=5
 
 if [[ ! -f "$preview" ]]; then
-  echo "ERROR: No embedded thumbnail found in '$src'" >&2
-  exit 1
+  # tiff used by dng
+  preview="${preview%.*}.tif"
+  tfuzz=0
+fi
+
+if [[ ! -f "$preview" ]]; then
+  echo "WARN: No embedded thumbnail found in '$src'" >&2
+  # slow attempt: try to directly read source file
+  preview="$src"
 fi
 
 # rotate and downscale preview image
 # WARN: Removing -strip could cause thumbnail generation loop
 magick "$preview" \
   -auto-orient \
-  -fuzz 5% -trim +repage \
+  -fuzz "${tfuzz}%" -trim +repage \
   -thumbnail "${size}x${size}>" \
   -strip \
   "png:$out"
